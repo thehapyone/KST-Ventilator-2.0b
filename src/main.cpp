@@ -30,15 +30,13 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-// put your main code here, to run repeatedly: forward @ full speed
-    digitalWrite(12, HIGH); 
-    //Establishes forward direction of Channel A
-    digitalWrite(9, LOW);  
-    //Disengage the Brake for Channel 
-    analogWrite(3, 255);   
-    //Spins the motor on Channel A at full speed
-    delay(1500);
-    digitalWrite(9, HIGH); //Eengage the Brake for Channel A
-    delay(1800);
+  // read the input on analog pin 0:
+  float sensorValue = ((analogRead(A0) * ADC_mV - SensorOffset) / sensitivity * mmh2O_kpa);     // result in kPa
+  // print out the value you read:
+  Serial.print("Air Pressure: ");  
+  Serial.print(sensorValue,2);
+  Serial.println(" kPa");
+  
+  delay(1000);        // delay in between reads for stability
 }
 
