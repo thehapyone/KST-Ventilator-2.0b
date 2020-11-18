@@ -4,6 +4,10 @@
  * Author: Knightec KST Team - Tomislav Galeta, Ayo Ayibiowu
  * @desc: some text
  * 
+ * Change Logs ----
+ * v0.1 #######################################
+ * - Simple breathing patten using constant motor speed value and cpu blocking (delay)
+ * - No support for exhale pressure assist (Motor is disabled during expiratory)
  * 
  **/
 
@@ -15,7 +19,6 @@
 #define sensitivity 4.413      // in mV/mmH2O taken from datasheet
 #define mmh2O_cmH2O 10         // divide by this figure to convert mmH2O to cmH2O
 #define mmh2O_kpa 0.00981      // convesion multiplier from mmH2O to kPa
-
 
 
 void setup() {
