@@ -8,8 +8,11 @@
  * v0.1 #######################################
  * - Simple breathing patten using constant motor speed value and cpu blocking (delay)
  * - No support for exhale pressure assist (Motor is disabled during expiratory)
- * v0.1 #######################################
- * - 
+ * v0.2 #######################################
+ * - Non blocking way of controlling the motor speed
+ * - Support for setting the breathing rate
+ * - Support for setting the inhale and exhale time
+ * - Support for setting the inhale and exhale speed
  **/
 
 #include <Arduino.h>
