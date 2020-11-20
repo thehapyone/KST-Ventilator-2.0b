@@ -58,7 +58,6 @@ void stopMotor(void);
 void startMotor(void);
 void setMotorSpeed(uint8_t);
 void setMotorDirection(uint8_t);
-
 /**
  * Stops the motor. Requries startMotor() to work again
  * @param (None)
@@ -96,17 +95,17 @@ void setMotorSpeed(uint8_t speed)
 
 /**
  * Sets the Motor Direction
- * @param (byte) 1 - Forward, 0 - Reverse
+ * @param (byte) 1 - Forward and 0 - Reverse
  * @returns None
  **/
 void setMotorDirection(uint8_t direction)
 {
-  if (direction == 1)
-    digitalWrite(motorChannelA, HIGH);
+  if (direction)
+  {
+      digitalWrite(12, HIGH);
+  }
   else
-    digitalWrite(motorChannelA, LOW);
-
-  
+    digitalWrite(12, HIGH);
 }
 
 /**
@@ -138,7 +137,7 @@ void setup() {
 
   // start the motor
   startMotor();
-  setMotorDirection(1); // Set the direction to Forward
+  setMotorDirection(1);
 
   delay(2000);
 
@@ -176,8 +175,6 @@ void loop() {
       breathingMode = INHALE_MODE; // change mode    break;
       timePrev = millis();
     }
-    break;
-    
   default:
     break;
   }
