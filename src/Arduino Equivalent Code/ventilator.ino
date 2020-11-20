@@ -39,8 +39,8 @@ uint16_t breathDuration = 0;  // Breath duration in seconds - Inhale + Exhale
 uint16_t inhaleTime = 0;  // Inspiratory time
 uint16_t exhaleTime = 0;  // Expiratory time
 
-uint8_t inhaleSpeed = 255;
-uint8_t exhaleSpeed = 100; 
+uint8_t inhaleSpeed = 150;
+uint8_t exhaleSpeed = 50; 
 
 uint8_t breathingMode; // Breathing mode sething - Inhale or exhale
 /************* Timer Variables *************************/
@@ -175,6 +175,8 @@ void loop() {
       breathingMode = INHALE_MODE; // change mode    break;
       timePrev = millis();
     }
+    break;
+
   default:
     break;
   }
@@ -183,6 +185,6 @@ void loop() {
   Serial.println(motorCurrent);
   Serial.print(" ");
 
-  delay(100);
+  delay(10);
 }
 
