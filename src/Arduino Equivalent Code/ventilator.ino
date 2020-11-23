@@ -1,28 +1,24 @@
 /***
  * KST Ventilator Project - XXX
  * Version: 2.0
- * Author: Knightec KST Team - Tomislav Galeta, Ayo Ayibiowu
- * @desc: some text
+ * Author: Knightec KST Team - Ayo Ayibiowu, Tomislav Galeta
+ * Contact Email: ayodeji.ayibiow@knightec.se
+ * @desc: The goal is to be able to create a low cost ventilator device with
+ * the ability to changing breathing parameters like breaths per minutes and others.
  * 
  * Change Logs ----
  * v0.1 #######################################
  * - Simple breathing patten using constant motor speed value and cpu blocking (delay)
  * - No support for exhale pressure assist (Motor is disabled during expiratory)
  * v0.2 #######################################
- * - Non blocking way of controlling the motor speed
- * - Support for setting the breathing rate
- * - Support for setting the inhale and exhale time
+ * - CPU blocking removed.
+ * - Support for setting the breaths per minute
+ * - Support for setting the inhale and exhale duration
  * - Support for setting the inhale and exhale speed
+ * - Support for measuring motor current usage
  **/
 
 #include <Arduino.h>
-
-/********** Presure Sensor Parameters *********************/
-#define SensorOffset 102.0     // in mV taken from datasheet
-#define ADC_mV 4.8828125       // convesion multiplier from Arduino ADC value to voltage in mV
-#define sensitivity 4.413      // in mV/mmH2O taken from datasheet
-#define mmh2O_cmH2O 10         // divide by this figure to convert mmH2O to cmH2O
-#define mmh2O_kpa 0.00981      // convesion multiplier from mmH2O to kPa
 
 /************ Pin Definitions *****************************/
 #define motorPin 3 // Motor pin for PWM control
@@ -42,10 +38,11 @@ uint16_t breathDuration = 0;  // Breath duration in seconds - Inhale + Exhale
 uint16_t inhaleTime = 0;  // Inspiratory time
 uint16_t exhaleTime = 0;  // Expiratory time
 
-uint8_t inhaleSpeed = 150;
+uint8_t inhaleSpeed = 150; // This is the equivalent pressure value in speed that is sent to the motor
 uint8_t exhaleSpeed = 50; 
 
 uint8_t breathingMode; // Breathing mode sething - Inhale or exhale
+
 /************* Timer Variables *************************/
 uint32_t timeNow = 0;
 uint32_t timePrev = 0;
