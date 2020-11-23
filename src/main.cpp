@@ -16,9 +16,13 @@
  * - Support for setting the inhale and exhale duration
  * - Support for setting the inhale and exhale speed
  * - Support for measuring motor current usage
+ * v0.21 ########################################
+ * - Addition of pressure sensor support.
+ * 
  **/
 
 #include <Arduino.h>
+#include "Honeywell.h"
 
 /************ Pin Definitions *****************************/
 #define motorPin 3 // Motor pin for PWM control
@@ -51,6 +55,10 @@ uint32_t timeDiff = 0;
 /************* Other Variables *************************/
 uint16_t motorCurrent = 0;
 
+
+/************* Pressure Sensor Config *************************/
+const uint8_t sensorPin = 9;
+Honeywell pressureSensor(sensorPin, 0.0, 60.0); //create instance of the sensor
 
 /************* Function declaration *************************/
 void initialize(void);
@@ -139,6 +147,9 @@ void setup() {
   startMotor();
   setMotorDirection(1);
 
+  // start the pressure sensor
+  pressureSensor.begin();
+
   delay(2000);
 
   // get the current time
@@ -185,6 +196,18 @@ void loop() {
   Serial.println(motorCurrent);
   Serial.print(" ");
 
-  delay(10);
+  // here we read the pressure sensor as well
+  pressureSensor.update();
+  float currentPressure = pressureSensor.readPressure();
+  uint8_t sensorStatus = pressureSensor.readStatus();
+
+  Serial.print("Current Pressure : ");  
+  Serial.print(currentPressure, 2);
+  Serial.println(" mbar");
+
+  Serial.print("Sensor Status : ");  
+  Serial.println(sensorStatus, 2);
+
+  delay(100);
 }
 
