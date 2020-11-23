@@ -28,12 +28,14 @@ S1 S0
 
 #define SENSOR_SPI_SPEED 700000
 
+
 class Honeywell
 {
 private:
     /* data */
     uint8_t _pin; 
-    float _pressureMax, _presureMin;
+    float _pressureMax;
+    float _presureMin;
     uint8_t _statusBit = 0;
     uint16_t _outputBytes = 0;
     
