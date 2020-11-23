@@ -117,7 +117,7 @@ void initialize(void)
 {
   // Initialize the breathing parameters
   breathDuration = (60.0/breathPerMin) * toMillsecs;
-  inhaleTime = 0.4 * breathDuration; 
+  inhaleTime = inhaleRatio * breathDuration; 
   exhaleTime = breathDuration - inhaleTime; 
 
   Serial.begin(9600);     // initialize serial communication at 9600 bits per second:
