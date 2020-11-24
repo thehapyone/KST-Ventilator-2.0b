@@ -6,6 +6,8 @@
 #ifndef Honeywell_h
 #define Honeywell_h
 
+#include <stdint.h>
+
 
 // Status Bit Information
 /*
@@ -35,7 +37,7 @@ private:
     /* data */
     uint8_t _pin; 
     float _pressureMax;
-    float _presureMin;
+    float _pressureMin;
     uint8_t _statusBit = 0;
     uint16_t _outputBytes = 0;
     

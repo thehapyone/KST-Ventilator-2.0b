@@ -22,7 +22,7 @@
  **/
 
 #include <Arduino.h>
-#include "Honeywell.h"
+#include <Honeywell.h>
 
 /************ Pin Definitions *****************************/
 #define motorPin 3 // Motor pin for PWM control

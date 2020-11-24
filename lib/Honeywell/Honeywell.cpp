@@ -1,9 +1,10 @@
 #include "Honeywell.h"
 #include <Arduino.h>
 #include <SPI.h>
+#include <stdint.h>
 
 
-Honeywell::Honeywell(uint8_t pin)
+Honeywell::Honeywell(uint8_t pin, float pressureMin, float pressureMax)
 {
     // Update the private pin
     _pin = pin;
@@ -24,7 +25,7 @@ void Honeywell::begin()
     SPI.begin();
 
     // Configure the Slave pin as output
-    pinMode(_pin, OUTPUT)
+    pinMode(_pin, OUTPUT);
 
     // Activate the pin to High to disable the pin
     digitalWrite(_pin, HIGH);
@@ -41,7 +42,7 @@ float Honeywell::_transferFunc(uint16_t dataIn)
 
 }
 
-float Honeywell::update(void)
+void Honeywell::update(void)
 {
     SPI.beginTransaction(SPISettings(SENSOR_SPI_SPEED, MSBFIRST, SPI_MODE0));
     
