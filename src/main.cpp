@@ -131,8 +131,8 @@ void initialize(void)
   Serial.begin(9600);     // initialize serial communication at 9600 bits per second:
 
   // Configure the output pins
-  pinMode(motorChannelA, OUTPUT); //Initiates Motor Channel A 
-  pinMode(brakeChannelA, OUTPUT); //Initiates Brake Channel A
+  //pinMode(motorChannelA, OUTPUT); //Initiates Motor Channel A 
+  //pinMode(brakeChannelA, OUTPUT); //Initiates Brake Channel A
 
   // set the starting breathing mode
   breathingMode = EXHALE_MODE;
@@ -144,8 +144,8 @@ void setup() {
   initialize(); // Initialize device parameters
 
   // start the motor
-  startMotor();
-  setMotorDirection(1);
+  //startMotor();
+  //setMotorDirection(1);
 
   // start the pressure sensor
   pressureSensor.begin();
@@ -208,6 +208,6 @@ void loop() {
   Serial.print("Sensor Status : ");  
   Serial.println(sensorStatus, 2);
 
-  delay(100);
+  delay(1000);
 }
 
