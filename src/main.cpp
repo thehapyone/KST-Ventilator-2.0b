@@ -200,7 +200,6 @@ void loop() {
   // here we read the pressure sensor as well
   pressureSensor.update();
   float currentPressure = pressureSensor.readPressure();
-  uint8_t sensorStatus = pressureSensor.readStatus();
   float pressure2 = currentPressure * tocmH20;
 
   if (pressureSensor.readStatus() == HONEYWELL_OK)
