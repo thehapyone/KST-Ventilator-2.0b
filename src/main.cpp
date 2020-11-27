@@ -57,7 +57,7 @@ uint16_t motorCurrent = 0;
 
 
 /************* Pressure Sensor Config *************************/
-const uint8_t sensorPin = 9;
+const uint8_t sensorPin = 10;
 Honeywell pressureSensor(sensorPin, 0.0, 60.0); //create instance of the sensor
 
 /************* Function declaration *************************/
