@@ -42,7 +42,7 @@ uint16_t breathDuration = 0;  // Breath duration in seconds - Inhale + Exhale
 uint16_t inhaleTime = 0;  // Inspiratory time
 uint16_t exhaleTime = 0;  // Expiratory time
 
-uint8_t inhaleSpeed = 150; // This is the equivalent pressure value in speed that is sent to the motor
+uint8_t inhaleSpeed = 255; // This is the equivalent pressure value in speed that is sent to the motor
 uint8_t exhaleSpeed = 50; 
 
 uint8_t breathingMode; // Breathing mode sething - Inhale or exhale
@@ -204,15 +204,15 @@ void loop() {
 
   if (pressureSensor.readStatus() == HONEYWELL_OK)
   {
-    Serial.print("Current Pressure : ");  
-    Serial.print(currentPressure, 2);
-    Serial.print(" mbar | ");
+    // Serial.print("Current Pressure : ");  
+    // Serial.print(currentPressure, 2);
+    // Serial.print(" mbar | ");
 
-    Serial.print(pressure2, 2);
-    Serial.println(" cmH20");
+    Serial.println(pressure2, 2);
+    //Serial.println(" cmH20");
   }
 
 
-  delay(1000);
+  delay(50);
 }
 
