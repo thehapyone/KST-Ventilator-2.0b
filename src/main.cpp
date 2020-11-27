@@ -26,8 +26,8 @@
 
 /************ Pin Definitions *****************************/
 #define motorPin 3 // Motor pin for PWM control
-#define motorChannelA 12 // Motor channel A
-#define brakeChannelA 9 // Motor Barke Channel A
+#define motorChannelA 5 // Motor channel A
+#define brakeChannelA 4 // Motor Barke Channel A
 #define MOTOR_BRAKE_USED 1 // For setting if the motor shield brake funtionality will be used
 #define motorSensingPin A0 // Current pin for the motor
 
@@ -59,6 +59,7 @@ uint16_t motorCurrent = 0;
 /************* Pressure Sensor Config *************************/
 const uint8_t sensorPin = 10;
 Honeywell pressureSensor(sensorPin, 0.0, 60.0); //create instance of the sensor
+#define tocmH20 1.0197162129779
 
 /************* Function declaration *************************/
 void initialize(void);
@@ -110,10 +111,10 @@ void setMotorDirection(uint8_t direction)
 {
   if (direction)
   {
-      digitalWrite(12, HIGH);
+      digitalWrite(motorChannelA, HIGH);
   }
   else
-    digitalWrite(12, HIGH);
+    digitalWrite(motorChannelA, HIGH);
 }
 
 /**
@@ -131,8 +132,8 @@ void initialize(void)
   Serial.begin(9600);     // initialize serial communication at 9600 bits per second:
 
   // Configure the output pins
-  //pinMode(motorChannelA, OUTPUT); //Initiates Motor Channel A 
-  //pinMode(brakeChannelA, OUTPUT); //Initiates Brake Channel A
+  pinMode(motorChannelA, OUTPUT); //Initiates Motor Channel A 
+  pinMode(brakeChannelA, OUTPUT); //Initiates Brake Channel A
 
   // set the starting breathing mode
   breathingMode = EXHALE_MODE;
@@ -144,8 +145,8 @@ void setup() {
   initialize(); // Initialize device parameters
 
   // start the motor
-  //startMotor();
-  //setMotorDirection(1);
+  startMotor();
+  setMotorDirection(1);
 
   // start the pressure sensor
   pressureSensor.begin();
@@ -192,21 +193,26 @@ void loop() {
     break;
   }
 
-  motorCurrent = analogRead(motorSensingPin);
-  Serial.println(motorCurrent);
-  Serial.print(" ");
+  // motorCurrent = analogRead(motorSensingPin);
+  // Serial.println(motorCurrent);
+  // Serial.print(" ");
 
   // here we read the pressure sensor as well
   pressureSensor.update();
   float currentPressure = pressureSensor.readPressure();
   uint8_t sensorStatus = pressureSensor.readStatus();
+  float pressure2 = currentPressure * tocmH20;
 
-  Serial.print("Current Pressure : ");  
-  Serial.print(currentPressure, 2);
-  Serial.println(" mbar");
+  if (pressureSensor.readStatus() == HONEYWELL_OK)
+  {
+    Serial.print("Current Pressure : ");  
+    Serial.print(currentPressure, 2);
+    Serial.print(" mbar | ");
 
-  Serial.print("Sensor Status : ");  
-  Serial.println(sensorStatus, 2);
+    Serial.print(pressure2, 2);
+    Serial.println(" cmH20");
+  }
+
 
   delay(1000);
 }
