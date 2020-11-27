@@ -4,13 +4,14 @@
  **/
 
 #include <Arduino.h>
-#include <Honeywell.h>
+#include "Honeywell.h"
 
 
 /************* Pressure Sensor Config *************************/
 const uint8_t sensorPin = 10; // The slave select pin
 Honeywell pressureSensor(sensorPin, 0.0, 60.0); //create instance of the sensor. It requires the SS pin, Min Pressure of sensor, and Max Pressure of sensor.
 
+const float tocmH20 = 1.0197162129779;
 void setup()
 {
     Serial.begin(9600);
@@ -25,14 +26,15 @@ void loop()
     pressureSensor.update();
     float currentPressure = pressureSensor.readPressure();
     uint8_t sensorStatus = pressureSensor.readStatus();
+    float pressure2 = currentPressure * tocmH20;
 
     Serial.print("Current Pressure : ");  
     Serial.print(currentPressure, 2);
-    Serial.println(" mbar");
+    Serial.print(" mbar | ");
+ 
+    Serial.print(pressure2, 2);
+    Serial.println(" cmH20");
 
-    Serial.print("Sensor Status : ");  
-    Serial.println(sensorStatus, 2);
-
-    delay(1000);
+    delay(500);
 
 }
