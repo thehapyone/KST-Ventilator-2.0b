@@ -16,20 +16,24 @@
  * - Support for setting the inhale and exhale duration
  * - Support for setting the inhale and exhale speed
  * - Support for measuring motor current usage
+ * v0.21 ########################################
+ * - Addition of pressure sensor support.
+ * 
  **/
 
 #include <Arduino.h>
+#include <Honeywell.h>
 
 /************ Pin Definitions *****************************/
 #define motorPin 3 // Motor pin for PWM control
-#define motorChannelA 12 // Motor channel A
-#define brakeChannelA 9 // Motor Barke Channel A
+#define motorChannelA 5 // Motor channel A
+#define brakeChannelA 4 // Motor Barke Channel A
 #define MOTOR_BRAKE_USED 1 // For setting if the motor shield brake funtionality will be used
 #define motorSensingPin A0 // Current pin for the motor
 
 /************* Breathing Settings *************************/
-#define breathPerMin 12 // The Breath per minute
-#define inhaleRatio 0.4 // Percentage of inhale time. Currently using a ratio of 2:3 (Inhale:Exhale)
+#define breathPerMin 2 // The Breath per minute
+#define inhaleRatio 0.8 // Percentage of inhale time. Currently using a ratio of 2:3 (Inhale:Exhale)
 #define toMillsecs 1000 // Converting Seconds to Millseconds
 #define INHALE_MODE 1
 #define EXHALE_MODE 2
@@ -38,7 +42,7 @@ uint16_t breathDuration = 0;  // Breath duration in seconds - Inhale + Exhale
 uint16_t inhaleTime = 0;  // Inspiratory time
 uint16_t exhaleTime = 0;  // Expiratory time
 
-uint8_t inhaleSpeed = 150; // This is the equivalent pressure value in speed that is sent to the motor
+uint8_t inhaleSpeed = 255; // This is the equivalent pressure value in speed that is sent to the motor
 uint8_t exhaleSpeed = 50; 
 
 uint8_t breathingMode; // Breathing mode sething - Inhale or exhale
@@ -51,6 +55,11 @@ uint32_t timeDiff = 0;
 /************* Other Variables *************************/
 uint16_t motorCurrent = 0;
 
+
+/************* Pressure Sensor Config *************************/
+const uint8_t sensorPin = 10;
+Honeywell pressureSensor(sensorPin, 0.0, 60.0); //create instance of the sensor
+#define tocmH20 1.0197162129779
 
 /************* Function declaration *************************/
 void initialize(void);
@@ -102,10 +111,10 @@ void setMotorDirection(uint8_t direction)
 {
   if (direction)
   {
-      digitalWrite(12, HIGH);
+      digitalWrite(motorChannelA, HIGH);
   }
   else
-    digitalWrite(12, HIGH);
+    digitalWrite(motorChannelA, HIGH);
 }
 
 /**
@@ -138,6 +147,9 @@ void setup() {
   // start the motor
   startMotor();
   setMotorDirection(1);
+
+  // start the pressure sensor
+  pressureSensor.begin();
 
   delay(2000);
 
@@ -181,10 +193,26 @@ void loop() {
     break;
   }
 
-  motorCurrent = analogRead(motorSensingPin);
-  Serial.println(motorCurrent);
-  Serial.print(" ");
+  // motorCurrent = analogRead(motorSensingPin);
+  // Serial.println(motorCurrent);
+  // Serial.print(" ");
 
-  delay(10);
+  // here we read the pressure sensor as well
+  pressureSensor.update();
+  float currentPressure = pressureSensor.readPressure();
+  float pressure2 = currentPressure * tocmH20;
+
+  if (pressureSensor.readStatus() == HONEYWELL_OK)
+  {
+    // Serial.print("Current Pressure : ");  
+    // Serial.print(currentPressure, 2);
+    // Serial.print(" mbar | ");
+
+    Serial.println(pressure2, 2);
+    //Serial.println(" cmH20");
+  }
+
+
+  delay(50);
 }
 
