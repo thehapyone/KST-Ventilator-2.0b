@@ -23,6 +23,7 @@
 
 #include <Arduino.h>
 #include <Honeywell.h>
+#include <EasyNextionLibrary.h>
 
 /************ Pin Definitions *****************************/
 #define motorPin 3 // Motor pin for PWM control
@@ -60,6 +61,11 @@ uint16_t motorCurrent = 0;
 const uint8_t sensorPin = 10;
 Honeywell pressureSensor(sensorPin, 0.0, 60.0); //create instance of the sensor
 #define tocmH20 1.0197162129779
+
+/************* Nextion Display Configuration ********************/
+EasyNex nextion(Serial); // Should we use SoftwareSerial or HardwareSerial
+#define displayRefresh 100 // In millisecs
+uint8_t currentPageId = 0; // Saves the current page id
 
 /************* Function declaration *************************/
 void initialize(void);
