@@ -33,8 +33,8 @@
 #define motorSensingPin A0 // Current pin for the motor
 
 /************* Breathing Settings *************************/
-#define breathPerMin 2 // The Breath per minute
-#define inhaleRatio 0.8 // Percentage of inhale time. Currently using a ratio of 2:3 (Inhale:Exhale)
+#define breathPerMin 12 // The Breath per minute
+#define inhaleRatio 0.4 // Percentage of inhale time. Currently using a ratio of 2:3 (Inhale:Exhale)
 #define toMillsecs 1000 // Converting Seconds to Millseconds
 #define INHALE_MODE 1
 #define EXHALE_MODE 2
