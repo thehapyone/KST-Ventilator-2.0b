@@ -18,20 +18,21 @@
  * - Support for measuring motor current usage
  * v0.21 ########################################
  * - Addition of pressure sensor support.
- * 
+ * v0.22 ########################################
+ * - Migrate code to support new motor : Brushless DC motor with an ESC
  **/
 
 #include <Arduino.h>
 #include <Honeywell.h>
 #include <EasyNextionLibrary.h>
+#include <Servo.h>
 
 /************ Pin Definitions *****************************/
-#define motorPin 3 // Motor pin for PWM control
-#define motorChannelA 5 // Motor channel A
-#define brakeChannelA 4 // Motor Barke Channel A
-#define MOTOR_BRAKE_USED 1 // For setting if the motor shield brake funtionality will be used
-#define motorSensingPin A0 // Current pin for the motor
+Servo motor;
 
+#define motorPin 3 // Motor pin for PWM control - new motor based on brushless motor
+#define motorMaxSpeed 180
+#define motorMinSpeed 0
 /************* Breathing Settings *************************/
 #define breathPerMin 12 // The Breath per minute
 #define inhaleRatio 0.4 // Percentage of inhale time. Currently using a ratio of 2:3 (Inhale:Exhale)
@@ -43,8 +44,8 @@ uint16_t breathDuration = 0;  // Breath duration in seconds - Inhale + Exhale
 uint16_t inhaleTime = 0;  // Inspiratory time
 uint16_t exhaleTime = 0;  // Expiratory time
 
-uint8_t inhaleSpeed = 255; // This is the equivalent pressure value in speed that is sent to the motor
-uint8_t exhaleSpeed = 50; 
+uint8_t inhaleSpeed = 180; // This is the equivalent pressure value in speed that is sent to the motor
+uint8_t exhaleSpeed = 80; 
 
 uint8_t breathingMode; // Breathing mode sething - Inhale or exhale
 
@@ -63,39 +64,39 @@ Honeywell pressureSensor(sensorPin, 0.0, 60.0); //create instance of the sensor
 #define tocmH20 1.0197162129779
 
 /************* Nextion Display Configuration ********************/
-EasyNex nextion(Serial); // Should we use SoftwareSerial or HardwareSerial
+//EasyNex nextion(Serial); // Should we use SoftwareSerial or HardwareSerial
 #define displayRefresh 100 // In millisecs
 uint8_t currentPageId = 0; // Saves the current page id
 
 /************* Function declaration *************************/
 void initialize(void);
-void stopMotor(void);
-void startMotor(void);
-void setMotorSpeed(uint8_t);
-void setMotorDirection(uint8_t);
+void stopMotor(Servo&);
+void startMotor(Servo&);
+void setMotorSpeed(Servo&, uint8_t);
+
 /**
  * Stops the motor. Requries startMotor() to work again
  * @param (None)
  * @returns None
  **/
-void stopMotor(void)
+void stopMotor(Servo& motor)
 {
-  analogWrite(motorPin, 0);
-  if (MOTOR_BRAKE_USED)
-    digitalWrite(brakeChannelA, HIGH);
+  motor.write(0);
 }
 
 /**
  * Starts the motor. Only needs to be called once until stopMotor() is called again
- * @param (None)
+ * @param (Servo object)
  * @returns None
  **/
-void startMotor(void)
+void startMotor(Servo& motor)
 {
-  // Disengage the brake if activated
-  if (MOTOR_BRAKE_USED)
-    digitalWrite(brakeChannelA, LOW);
-  analogWrite(motorPin, 0);
+  motor.attach(motorPin,1000,2000); // (pin, min pulse width, max pulse width in microseconds) 
+  //"Initializing ESC");
+  motor.write(motorMaxSpeed);
+  delay(2200);
+  motor.write(motorMinSpeed);
+  delay(3000);
 }
 
 /**
@@ -103,25 +104,11 @@ void startMotor(void)
  * @param (byte) A PWM Speed value between 0-255
  * @returns None
  **/
-void setMotorSpeed(uint8_t speed)
+void setMotorSpeed(Servo& motor, uint8_t speed)
 {
-  analogWrite(motorPin, speed);
+  motor.write(speed);
 }
 
-/**
- * Sets the Motor Direction
- * @param (byte) 1 - Forward and 0 - Reverse
- * @returns None
- **/
-void setMotorDirection(uint8_t direction)
-{
-  if (direction)
-  {
-      digitalWrite(motorChannelA, HIGH);
-  }
-  else
-    digitalWrite(motorChannelA, HIGH);
-}
 
 /**
  * Here we initialize the startup device parameters
@@ -135,24 +122,18 @@ void initialize(void)
   inhaleTime = inhaleRatio * breathDuration; 
   exhaleTime = breathDuration - inhaleTime; 
 
-  Serial.begin(9600);     // initialize serial communication at 9600 bits per second:
+  // start the motor
+  startMotor(motor);
 
-  // Configure the output pins
-  pinMode(motorChannelA, OUTPUT); //Initiates Motor Channel A 
-  pinMode(brakeChannelA, OUTPUT); //Initiates Brake Channel A
+  Serial.begin(9600);     // initialize serial communication at 9600 bits per second:
 
   // set the starting breathing mode
   breathingMode = EXHALE_MODE;
 
 }
 
-
 void setup() {
   initialize(); // Initialize device parameters
-
-  // start the motor
-  startMotor();
-  setMotorDirection(1);
 
   // start the pressure sensor
   pressureSensor.begin();
@@ -172,7 +153,7 @@ void loop() {
   {
   case INHALE_MODE:
     // activate the inhale pressure
-    setMotorSpeed(inhaleSpeed);
+    setMotorSpeed(motor, inhaleSpeed);
     // check if its time to swtich mode
     timeDiff = millis() - timePrev;
     if (timeDiff >= inhaleTime)
@@ -184,7 +165,7 @@ void loop() {
   
   case EXHALE_MODE:
     // activate the exhale pressure
-    setMotorSpeed(exhaleSpeed);
+    setMotorSpeed(motor, exhaleSpeed);
     // check if its time to swtich mode
     timeDiff = millis() - timePrev;
 
