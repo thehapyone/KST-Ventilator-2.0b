@@ -64,7 +64,7 @@ Honeywell pressureSensor(sensorPin, 0.0, 60.0); //create instance of the sensor
 #define tocmH20 1.0197162129779
 
 /************* Nextion Display Configuration ********************/
-//EasyNex nextion(Serial); // Should we use SoftwareSerial or HardwareSerial
+EasyNex nextion(Serial); // Should we use SoftwareSerial or HardwareSerial
 #define displayRefresh 100 // In millisecs
 uint8_t currentPageId = 0; // Saves the current page id
 
@@ -73,6 +73,7 @@ void initialize(void);
 void stopMotor(Servo&);
 void startMotor(Servo&);
 void setMotorSpeed(Servo&, uint8_t);
+void changePage(String);
 
 /**
  * Stops the motor. Requries startMotor() to work again
@@ -110,6 +111,7 @@ void setMotorSpeed(Servo& motor, uint8_t speed)
 }
 
 
+
 /**
  * Here we initialize the startup device parameters
  * @param (None)
@@ -124,12 +126,32 @@ void initialize(void)
 
   // start the motor
   startMotor(motor);
-
-  Serial.begin(9600);     // initialize serial communication at 9600 bits per second:
+  // Enable screen communication
+  nextion.begin(115200);
 
   // set the starting breathing mode
   breathingMode = EXHALE_MODE;
 
+}
+
+/**
+ * Here we send a command to change the screen of the Nextion display
+ * @param (String) - The page name we want to change to.
+ * @returns None
+ **/
+
+void changePage(String pageName)
+{
+  // send a command to change the screen
+  
+  nextion.writeStr("page "+pageName);
+
+}
+
+void homeScreenUpdate()
+{
+  // Allows for updating the values on the homeScreen.
+  // Here, we update the latest IPAP, EPAP, BPM and Inhale Time values
 }
 
 void setup() {
@@ -140,13 +162,16 @@ void setup() {
 
   delay(2000);
 
+  // Send a start command to the screen
+  changePage("start");
   // get the current time
   timePrev = millis();
 
 }
 
-
 void loop() {
+  // Enable screen listener
+  nextion.NextionListen();
 
   // Check the breathing mode
   switch (breathingMode)
