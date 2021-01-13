@@ -34,8 +34,8 @@ Servo motor;
 #define motorMaxSpeed 180
 #define motorMinSpeed 0
 /************* Breathing Settings *************************/
-#define breathPerMin 12 // The Breath per minute
-#define inhaleRatio 0.4 // Percentage of inhale time. Currently using a ratio of 2:3 (Inhale:Exhale)
+uint8_t breathPerMin = 12; // The Breath per minute
+double inhaleRatio = 0.4; // Percentage of inhale time. Currently using a ratio of 2:3 (Inhale:Exhale)
 #define toMillsecs 1000 // Converting Seconds to Millseconds
 #define INHALE_MODE 1
 #define EXHALE_MODE 2
@@ -46,6 +46,9 @@ uint16_t exhaleTime = 0;  // Expiratory time
 
 uint8_t inhaleSpeed = 180; // This is the equivalent pressure value in speed that is sent to the motor
 uint8_t exhaleSpeed = 80; 
+
+double ipap = 12; // Pressure values in mmH20
+double epap = 5; // pressure values in mmH20
 
 uint8_t breathingMode; // Breathing mode sething - Inhale or exhale
 
@@ -66,6 +69,12 @@ Honeywell pressureSensor(sensorPin, 0.0, 60.0); //create instance of the sensor
 /************* Nextion Display Configuration ********************/
 EasyNex nextion(Serial); // Should we use SoftwareSerial or HardwareSerial
 #define displayRefresh 100 // In millisecs
+
+// Trigger mapping functions
+#define trigger0() saveSettingsUpdate()
+#define trigger1() settingsScreenUpdate()
+#define trigger2() cancelSettingsSave()
+
 uint8_t currentPageId = 0; // Saves the current page id
 
 /************* Function declaration *************************/
@@ -110,6 +119,18 @@ void setMotorSpeed(Servo& motor, uint8_t speed)
   motor.write(speed);
 }
 
+/**
+ * Here we calculate the breathing information
+ * @param (None)
+ * @returns None
+ **/
+void updateBreathingParameters(void)
+{
+  // update the breathing parameters
+  breathDuration = (60.0/breathPerMin) * toMillsecs;
+  inhaleTime = inhaleRatio * breathDuration; 
+  exhaleTime = breathDuration - inhaleTime; 
+}
 
 
 /**
@@ -119,10 +140,8 @@ void setMotorSpeed(Servo& motor, uint8_t speed)
  **/
 void initialize(void)
 {
-  // Initialize the breathing parameters
-  breathDuration = (60.0/breathPerMin) * toMillsecs;
-  inhaleTime = inhaleRatio * breathDuration; 
-  exhaleTime = breathDuration - inhaleTime; 
+  // update the breathing parameters
+  updateBreathingParameters();
 
   // start the motor
   startMotor(motor);
@@ -154,6 +173,84 @@ void homeScreenUpdate()
   // Here, we update the latest IPAP, EPAP, BPM and Inhale Time values
 }
 
+/**
+ * Here we update the variables value when the save button is pressed
+ * We update the latest IPAP, EPAP, BPM and Inhale Time values
+ * @param None
+ * @returns None
+ **/
+
+void saveSettingsUpdate()
+{
+  // Here we update the variables value when the save button is pressed
+  // Here, we update the latest IPAP, EPAP, BPM and Inhale Time values
+
+  // Get the BPM
+  const uint32_t tempBPM = nextion.readNumber("bpm.val");
+  if (tempBPM != 777777)
+    breathPerMin = (uint8_t)tempBPM;
+
+  // Get the Inhale ratio
+  const uint32_t tempInhaleRate = nextion.readNumber("inhale.val");
+  if (tempInhaleRate != 777777)
+    // convert to ratio values
+    inhaleRatio = (double)tempInhaleRate / 100.0;
+  
+  // Get the IPAP values
+  const uint32_t ipapVal = nextion.readNumber("ipap.val");
+  if (ipapVal != 777777)
+    ipap = (double)ipapVal / 10.0;
+
+  // Get the EPAP values
+  const uint32_t epapVal = nextion.readNumber("ipap.val");
+  if (epapVal != 777777)
+    epap = (double)epapVal / 10.0;
+
+  // Update the breathing parameters
+  updateBreathingParameters();
+
+  // ack
+  if (tempBPM == 777777 || tempInhaleRate == 777777 || ipapVal == 777777 || epapVal == 777777)
+    // send back a failed save request.
+    nextion.writeNum("savestate.val", 2);
+  else
+  {
+    nextion.writeNum("savestate.val", 1);
+  }
+}
+
+/**
+ * Send the current values to the screen
+ * @param None
+ * @returns None
+ **/
+
+void settingsScreenUpdate()
+{
+  // here we update the default or last save values when this is called
+  //BPm
+  nextion.writeNum("bpm.val", breathPerMin);
+  //inhaleRatio and exhaleRatio
+  uint16_t myInhaleRate = inhaleRatio * 100;
+  nextion.writeNum("ipap.val", myInhaleRate);
+  nextion.writeNum("epap.val", 100-myInhaleRate);
+  //iPAP and ePAP  
+  uint16_t myIpap = ipap * 10;
+  nextion.writeNum("ipap.val", myIpap);
+  uint16_t myEpap = epap * 10;
+  nextion.writeNum("ipap.val", myEpap);
+}
+
+/**
+ * Here we cancel the pending values update.
+ * @param None
+ * @returns None
+ **/
+void cancelSettinSgsSave()
+{
+  // it basically calls the settings screen update again.
+  settingsScreenUpdate();
+}
 void setup() {
   initialize(); // Initialize device parameters
 
