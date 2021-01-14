@@ -12,12 +12,13 @@
 #ifndef trigger_h
 #include "trigger.h"
 #endif
+#include <SoftwareSerial.h>
 
 //-------------------------------------------------------------------------
  // Constructor : Function that handles the creation and setup of instances
 //---------------------------------------------------------------------------
 
-EasyNex::EasyNex(HardwareSerial& serial){  // Constructor's parameter is the Serial we want to use
+EasyNex::EasyNex(SoftwareSerial& serial){  // Constructor's parameter is the Serial we want to use
   _serial = &serial;
 }
 

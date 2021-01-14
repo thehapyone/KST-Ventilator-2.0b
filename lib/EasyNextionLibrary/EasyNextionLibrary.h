@@ -15,6 +15,7 @@
 //--------------------------------------------------------
 #ifndef EasyNextionLibrary_h
 #define EasyNextionLibrary_h
+#include <SoftwareSerial.h>
 
 
 
@@ -78,7 +79,7 @@ class EasyNex {
    
 
 	public:
-    EasyNex(HardwareSerial& serial);
+    EasyNex(SoftwareSerial& serial);
 		void begin(unsigned long baud = 9600);
     void writeNum(String, uint32_t);
     void writeStr(String, String txt = "cmd");
@@ -115,7 +116,7 @@ class EasyNex {
 	 // library-accessible "private" interface
   //-----------------------------------------
 	private:
-    HardwareSerial* _serial;
+    SoftwareSerial* _serial;
 		void readCommand(void);
     void callTriggerFunction(void);
     

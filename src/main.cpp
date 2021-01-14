@@ -26,6 +26,10 @@
 #include <Honeywell.h>
 #include <EasyNextionLibrary.h>
 #include <Servo.h>
+#include <SoftwareSerial.h>
+
+SoftwareSerial mySerial(5, 6); // RX, TX
+
 
 /************ Pin Definitions *****************************/
 Servo motor;
@@ -67,13 +71,9 @@ Honeywell pressureSensor(sensorPin, 0.0, 60.0); //create instance of the sensor
 #define tocmH20 1.0197162129779
 
 /************* Nextion Display Configuration ********************/
-EasyNex nextion(Serial); // Should we use SoftwareSerial or HardwareSerial
-#define displayRefresh 100 // In millisecs
 
-// Trigger mapping functions
-#define trigger0() saveSettingsUpdate()
-#define trigger1() settingsScreenUpdate()
-#define trigger2() cancelSettingsSave()
+EasyNex nextion(mySerial); // Should we use SoftwareSerial or HardwareSerial
+#define displayRefresh 100 // In millisecs
 
 uint8_t currentPageId = 0; // Saves the current page id
 
@@ -140,13 +140,16 @@ void updateBreathingParameters(void)
  **/
 void initialize(void)
 {
+  // Enable screen communication
+  nextion.begin(9600);
+  changePage("default");
+
   // update the breathing parameters
   updateBreathingParameters();
 
   // start the motor
   startMotor(motor);
-  // Enable screen communication
-  nextion.begin(115200);
+
 
   // set the starting breathing mode
   breathingMode = EXHALE_MODE;
@@ -184,9 +187,10 @@ void saveSettingsUpdate()
 {
   // Here we update the variables value when the save button is pressed
   // Here, we update the latest IPAP, EPAP, BPM and Inhale Time values
-
+  Serial.println("Save btn fired");
   // Get the BPM
-  const uint32_t tempBPM = nextion.readNumber("bpm.val");
+  const int tempBPM = nextion.readNumber("exhale.val");
+  Serial.println(tempBPM);
   if (tempBPM != 777777)
     breathPerMin = (uint8_t)tempBPM;
 
@@ -217,6 +221,10 @@ void saveSettingsUpdate()
   {
     nextion.writeNum("savestate.val", 1);
   }
+
+  Serial.print("new values are: ");
+  Serial.println(breathPerMin);
+  Serial.println(ipap);
 }
 
 /**
@@ -229,6 +237,12 @@ void settingsScreenUpdate()
 {
   // here we update the default or last save values when this is called
   //BPm
+  Serial.println("in settings");
+  
+  Serial.print("values are: ");
+  Serial.println(breathPerMin);
+  Serial.println(ipap);
+
   nextion.writeNum("bpm.val", breathPerMin);
   //inhaleRatio and exhaleRatio
   uint16_t myInhaleRate = inhaleRatio * 100;
@@ -246,25 +260,53 @@ void settingsScreenUpdate()
  * @param None
  * @returns None
  **/
-void cancelSettinSgsSave()
+void cancelSettingsSave()
 {
   // it basically calls the settings screen update again.
   settingsScreenUpdate();
 }
+
+// Trigger mapping functions
+//  #define trigger0() saveSettingsUpdate()
+//  #define trigger1() settingsScreenUpdate()
+//  #define trigger2() cancelSettingsSave()
+
+ void trigger0()
+ {
+   saveSettingsUpdate();
+ }
+
+ void trigger1()
+ {
+   settingsScreenUpdate();
+ }
+
+  void trigger2()
+ {
+   cancelSettingsSave();
+ }
+
 void setup() {
+  Serial.begin(9600);
+  Serial.println("Starting 1");
+
   initialize(); // Initialize device parameters
+  Serial.println("Starting 2");
 
   // start the pressure sensor
   pressureSensor.begin();
 
   delay(2000);
-
+  Serial.println("changing screen to start");
   // Send a start command to the screen
   changePage("start");
   // get the current time
   timePrev = millis();
 
 }
+
+
+
 
 void loop() {
   // Enable screen listener
@@ -276,6 +318,8 @@ void loop() {
   case INHALE_MODE:
     // activate the inhale pressure
     setMotorSpeed(motor, inhaleSpeed);
+    //Serial.print("Current screen - ");
+    //Serial.println(nextion.currentPageId);
     // check if its time to swtich mode
     timeDiff = millis() - timePrev;
     if (timeDiff >= inhaleTime)
@@ -317,7 +361,7 @@ void loop() {
     // Serial.print(currentPressure, 2);
     // Serial.print(" mbar | ");
 
-    Serial.println(pressure2, 2);
+    //Serial.println(pressure2, 2);
     //Serial.println(" cmH20");
   }
 
