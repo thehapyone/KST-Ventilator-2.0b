@@ -20,6 +20,8 @@
  * - Addition of pressure sensor support.
  * v0.22 ########################################
  * - Migrate code to support new motor : Brushless DC motor with an ESC
+ * v0.23 ########################################
+ * - Added display support. The device can be monitored and controlled from a touchsreen display
  **/
 
 #include <Arduino.h>
