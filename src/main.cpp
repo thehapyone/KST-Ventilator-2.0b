@@ -77,12 +77,20 @@ EasyNex nextion(mySerial); // Should we use SoftwareSerial or HardwareSerial
 
 uint8_t currentPageId = 0; // Saves the current page id
 
+// For tracking the page ids
+#define SETTINGS_PAGE_ID 3
+#define SAVE_PAGE_ID 4
+#define HOME_PAGE_ID 2
+#define START_PAGE_ID 1
+#define WELCOME_PAGE_ID 0
+
+
 /************* Function declaration *************************/
 void initialize(void);
 void stopMotor(Servo&);
 void startMotor(Servo&);
 void setMotorSpeed(Servo&, uint8_t);
-void changePage(String);
+void changePage(uint8_t);
 
 /**
  * Stops the motor. Requries startMotor() to work again
@@ -142,7 +150,7 @@ void initialize(void)
 {
   // Enable screen communication
   nextion.begin(9600);
-  changePage("default");
+  changePage(WELCOME_PAGE_ID);
 
   // update the breathing parameters
   updateBreathingParameters();
@@ -162,11 +170,11 @@ void initialize(void)
  * @returns None
  **/
 
-void changePage(String pageName)
+void changePage(uint8_t pageName)
 {
   // send a command to change the screen
   
-  nextion.writeStr("page "+pageName);
+  nextion.writeStr("page "+String(pageName));
 
 }
 
@@ -189,8 +197,7 @@ void saveSettingsUpdate()
   // Here, we update the latest IPAP, EPAP, BPM and Inhale Time values
   Serial.println("Save btn fired");
   // Get the BPM
-  const int tempBPM = nextion.readNumber("exhale.val");
-  Serial.println(tempBPM);
+  const int tempBPM = nextion.readNumber("bpm.val");
   if (tempBPM != 777777)
     breathPerMin = (uint8_t)tempBPM;
 
@@ -206,13 +213,15 @@ void saveSettingsUpdate()
     ipap = (double)ipapVal / 10.0;
 
   // Get the EPAP values
-  const uint32_t epapVal = nextion.readNumber("ipap.val");
+  const uint32_t epapVal = nextion.readNumber("epap.val");
   if (epapVal != 777777)
     epap = (double)epapVal / 10.0;
 
   // Update the breathing parameters
   updateBreathingParameters();
 
+  // wait until we are in the save screen
+  delay(500);
   // ack
   if (tempBPM == 777777 || tempInhaleRate == 777777 || ipapVal == 777777 || epapVal == 777777)
     // send back a failed save request.
@@ -223,8 +232,8 @@ void saveSettingsUpdate()
   }
 
   Serial.print("new values are: ");
-  Serial.println(breathPerMin);
-  Serial.println(ipap);
+  const String p1=";";
+  Serial.println(breathPerMin + p1 + inhaleRatio + p1 + ipap + p1 + epap);
 }
 
 /**
@@ -238,21 +247,24 @@ void settingsScreenUpdate()
   // here we update the default or last save values when this is called
   //BPm
   Serial.println("in settings");
+  //delay(50);
+  if(nextion.currentPageId != SETTINGS_PAGE_ID)
+    changePage(SETTINGS_PAGE_ID);
   
   Serial.print("values are: ");
-  Serial.println(breathPerMin);
-  Serial.println(ipap);
+  const String p1=";";
+  Serial.println(breathPerMin + p1 + inhaleRatio + p1 + ipap + p1 + epap);
 
-  nextion.writeNum("bpm.val", breathPerMin);
+  nextion.writeNum("bpm.val", (uint32_t) breathPerMin);
   //inhaleRatio and exhaleRatio
-  uint16_t myInhaleRate = inhaleRatio * 100;
-  nextion.writeNum("ipap.val", myInhaleRate);
-  nextion.writeNum("epap.val", 100-myInhaleRate);
+  uint32_t myInhaleRate = inhaleRatio * 100;
+  nextion.writeNum("inhale.val", myInhaleRate);
+  nextion.writeNum("exhale.val", 100-myInhaleRate);
   //iPAP and ePAP  
-  uint16_t myIpap = ipap * 10;
+  uint32_t myIpap = ipap * 10;
   nextion.writeNum("ipap.val", myIpap);
-  uint16_t myEpap = epap * 10;
-  nextion.writeNum("ipap.val", myEpap);
+  uint32_t myEpap = epap * 10;
+  nextion.writeNum("epap.val", myEpap);
 }
 
 /**
@@ -267,9 +279,6 @@ void cancelSettingsSave()
 }
 
 // Trigger mapping functions
-//  #define trigger0() saveSettingsUpdate()
-//  #define trigger1() settingsScreenUpdate()
-//  #define trigger2() cancelSettingsSave()
 
  void trigger0()
  {
@@ -278,20 +287,19 @@ void cancelSettingsSave()
 
  void trigger1()
  {
-   settingsScreenUpdate();
+   cancelSettingsSave();
  }
 
   void trigger2()
  {
-   cancelSettingsSave();
+   settingsScreenUpdate();
  }
 
 void setup() {
   Serial.begin(9600);
-  Serial.println("Starting 1");
+  Serial.println("Booting Up");
 
   initialize(); // Initialize device parameters
-  Serial.println("Starting 2");
 
   // start the pressure sensor
   pressureSensor.begin();
@@ -299,7 +307,7 @@ void setup() {
   delay(2000);
   Serial.println("changing screen to start");
   // Send a start command to the screen
-  changePage("start");
+  changePage(START_PAGE_ID);
   // get the current time
   timePrev = millis();
 
@@ -364,8 +372,18 @@ void loop() {
     //Serial.println(pressure2, 2);
     //Serial.println(" cmH20");
   }
+  /*
+  int currentpage = nextion.currentPageId;
+  //Serial.println(currentpage);
+  if (currentpage == 3) {
+  
+  unsigned long xHake = nextion.readNumber("bpm.val"); // Store to x the value of numeric box n0
+  Serial.print("bpm val: ");
+  Serial.println(xHake);
+  Serial.println("----");
+  }
+  */
 
-
-  delay(50);
+  delay(20);
 }
 
