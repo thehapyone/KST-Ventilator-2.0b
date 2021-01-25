@@ -18,22 +18,30 @@
  * - Support for measuring motor current usage
  * v0.21 ########################################
  * - Addition of pressure sensor support.
- * 
+ * v0.22 ########################################
+ * - Migrate code to support new motor : Brushless DC motor with an ESC
+ * v0.23 ########################################
+ * - Added display support. The device can be monitored and controlled from a touchsreen display
  **/
 
 #include <Arduino.h>
 #include <Honeywell.h>
+#include <EasyNextionLibrary.h>
+#include <Servo.h>
+#include <SoftwareSerial.h>
+
+SoftwareSerial mySerial(5, 6); // RX, TX
+
 
 /************ Pin Definitions *****************************/
-#define motorPin 3 // Motor pin for PWM control
-#define motorChannelA 5 // Motor channel A
-#define brakeChannelA 4 // Motor Barke Channel A
-#define MOTOR_BRAKE_USED 1 // For setting if the motor shield brake funtionality will be used
-#define motorSensingPin A0 // Current pin for the motor
+Servo motor;
 
+#define motorPin 3 // Motor pin for PWM control - new motor based on brushless motor
+#define motorMaxSpeed 180
+#define motorMinSpeed 0
 /************* Breathing Settings *************************/
-#define breathPerMin 2 // The Breath per minute
-#define inhaleRatio 0.8 // Percentage of inhale time. Currently using a ratio of 2:3 (Inhale:Exhale)
+uint8_t breathPerMin = 12; // The Breath per minute
+double inhaleRatio = 0.4; // Percentage of inhale time. Currently using a ratio of 2:3 (Inhale:Exhale)
 #define toMillsecs 1000 // Converting Seconds to Millseconds
 #define INHALE_MODE 1
 #define EXHALE_MODE 2
@@ -42,8 +50,11 @@ uint16_t breathDuration = 0;  // Breath duration in seconds - Inhale + Exhale
 uint16_t inhaleTime = 0;  // Inspiratory time
 uint16_t exhaleTime = 0;  // Expiratory time
 
-uint8_t inhaleSpeed = 255; // This is the equivalent pressure value in speed that is sent to the motor
-uint8_t exhaleSpeed = 50; 
+uint8_t inhaleSpeed = 180; // This is the equivalent pressure value in speed that is sent to the motor
+uint8_t exhaleSpeed = 80; 
+
+double ipap = 12; // Pressure values in mmH20
+double epap = 5; // pressure values in mmH20
 
 uint8_t breathingMode; // Breathing mode sething - Inhale or exhale
 
@@ -61,35 +72,51 @@ const uint8_t sensorPin = 10;
 Honeywell pressureSensor(sensorPin, 0.0, 60.0); //create instance of the sensor
 #define tocmH20 1.0197162129779
 
+/************* Nextion Display Configuration ********************/
+
+EasyNex nextion(mySerial); // Should we use SoftwareSerial or HardwareSerial
+#define displayRefresh 100 // In millisecs
+
+uint8_t currentPageId = 0; // Saves the current page id
+
+// For tracking the page ids
+#define SETTINGS_PAGE_ID 3
+#define SAVE_PAGE_ID 4
+#define HOME_PAGE_ID 2
+#define START_PAGE_ID 1
+#define WELCOME_PAGE_ID 0
+
+
 /************* Function declaration *************************/
 void initialize(void);
-void stopMotor(void);
-void startMotor(void);
-void setMotorSpeed(uint8_t);
-void setMotorDirection(uint8_t);
+void stopMotor(Servo&);
+void startMotor(Servo&);
+void setMotorSpeed(Servo&, uint8_t);
+void changePage(uint8_t);
+
 /**
  * Stops the motor. Requries startMotor() to work again
  * @param (None)
  * @returns None
  **/
-void stopMotor(void)
+void stopMotor(Servo& motor)
 {
-  analogWrite(motorPin, 0);
-  if (MOTOR_BRAKE_USED)
-    digitalWrite(brakeChannelA, HIGH);
+  motor.write(0);
 }
 
 /**
  * Starts the motor. Only needs to be called once until stopMotor() is called again
- * @param (None)
+ * @param (Servo object)
  * @returns None
  **/
-void startMotor(void)
+void startMotor(Servo& motor)
 {
-  // Disengage the brake if activated
-  if (MOTOR_BRAKE_USED)
-    digitalWrite(brakeChannelA, LOW);
-  analogWrite(motorPin, 0);
+  motor.attach(motorPin,1000,2000); // (pin, min pulse width, max pulse width in microseconds) 
+  //"Initializing ESC");
+  motor.write(motorMaxSpeed);
+  delay(2200);
+  motor.write(motorMinSpeed);
+  delay(3000);
 }
 
 /**
@@ -97,25 +124,24 @@ void startMotor(void)
  * @param (byte) A PWM Speed value between 0-255
  * @returns None
  **/
-void setMotorSpeed(uint8_t speed)
+void setMotorSpeed(Servo& motor, uint8_t speed)
 {
-  analogWrite(motorPin, speed);
+  motor.write(speed);
 }
 
 /**
- * Sets the Motor Direction
- * @param (byte) 1 - Forward and 0 - Reverse
+ * Here we calculate the breathing information
+ * @param (None)
  * @returns None
  **/
-void setMotorDirection(uint8_t direction)
+void updateBreathingParameters(void)
 {
-  if (direction)
-  {
-      digitalWrite(motorChannelA, HIGH);
-  }
-  else
-    digitalWrite(motorChannelA, HIGH);
+  // update the breathing parameters
+  breathDuration = (60.0/breathPerMin) * toMillsecs;
+  inhaleTime = inhaleRatio * breathDuration; 
+  exhaleTime = breathDuration - inhaleTime; 
 }
+
 
 /**
  * Here we initialize the startup device parameters
@@ -124,49 +150,186 @@ void setMotorDirection(uint8_t direction)
  **/
 void initialize(void)
 {
-  // Initialize the breathing parameters
-  breathDuration = (60.0/breathPerMin) * toMillsecs;
-  inhaleTime = inhaleRatio * breathDuration; 
-  exhaleTime = breathDuration - inhaleTime; 
+  // Enable screen communication
+  nextion.begin(9600);
+  changePage(WELCOME_PAGE_ID);
 
-  Serial.begin(9600);     // initialize serial communication at 9600 bits per second:
+  // update the breathing parameters
+  updateBreathingParameters();
 
-  // Configure the output pins
-  pinMode(motorChannelA, OUTPUT); //Initiates Motor Channel A 
-  pinMode(brakeChannelA, OUTPUT); //Initiates Brake Channel A
+  // start the motor
+  startMotor(motor);
+
 
   // set the starting breathing mode
   breathingMode = EXHALE_MODE;
 
 }
 
+/**
+ * Here we send a command to change the screen of the Nextion display
+ * @param (String) - The page name we want to change to.
+ * @returns None
+ **/
+
+void changePage(uint8_t pageName)
+{
+  // send a command to change the screen
+  
+  nextion.writeStr("page "+String(pageName));
+
+}
+
+void homeScreenUpdate()
+{
+  // Allows for updating the values on the homeScreen.
+  // Here, we update the latest IPAP, EPAP, BPM and Inhale Time values
+}
+
+/**
+ * Here we update the variables value when the save button is pressed
+ * We update the latest IPAP, EPAP, BPM and Inhale Time values
+ * @param None
+ * @returns None
+ **/
+
+void saveSettingsUpdate()
+{
+  // Here we update the variables value when the save button is pressed
+  // Here, we update the latest IPAP, EPAP, BPM and Inhale Time values
+  Serial.println("Save btn fired");
+  // Get the BPM
+  const int tempBPM = nextion.readNumber("bpm.val");
+  if (tempBPM != 777777)
+    breathPerMin = (uint8_t)tempBPM;
+
+  // Get the Inhale ratio
+  const uint32_t tempInhaleRate = nextion.readNumber("inhale.val");
+  if (tempInhaleRate != 777777)
+    // convert to ratio values
+    inhaleRatio = (double)tempInhaleRate / 100.0;
+  
+  // Get the IPAP values
+  const uint32_t ipapVal = nextion.readNumber("ipap.val");
+  if (ipapVal != 777777)
+    ipap = (double)ipapVal / 10.0;
+
+  // Get the EPAP values
+  const uint32_t epapVal = nextion.readNumber("epap.val");
+  if (epapVal != 777777)
+    epap = (double)epapVal / 10.0;
+
+  // Update the breathing parameters
+  updateBreathingParameters();
+
+  // wait until we are in the save screen
+  delay(500);
+  // ack
+  if (tempBPM == 777777 || tempInhaleRate == 777777 || ipapVal == 777777 || epapVal == 777777)
+    // send back a failed save request.
+    nextion.writeNum("savestate.val", 2);
+  else
+  {
+    nextion.writeNum("savestate.val", 1);
+  }
+
+  Serial.print("new values are: ");
+  const String p1=";";
+  Serial.println(breathPerMin + p1 + inhaleRatio + p1 + ipap + p1 + epap);
+}
+
+/**
+ * Send the current values to the screen
+ * @param None
+ * @returns None
+ **/
+
+void settingsScreenUpdate()
+{
+  // here we update the default or last save values when this is called
+  //BPm
+  Serial.println("in settings");
+  //delay(50);
+  if(nextion.currentPageId != SETTINGS_PAGE_ID)
+    changePage(SETTINGS_PAGE_ID);
+  
+  Serial.print("values are: ");
+  const String p1=";";
+  Serial.println(breathPerMin + p1 + inhaleRatio + p1 + ipap + p1 + epap);
+
+  nextion.writeNum("bpm.val", (uint32_t) breathPerMin);
+  //inhaleRatio and exhaleRatio
+  uint32_t myInhaleRate = inhaleRatio * 100;
+  nextion.writeNum("inhale.val", myInhaleRate);
+  nextion.writeNum("exhale.val", 100-myInhaleRate);
+  //iPAP and ePAP  
+  uint32_t myIpap = ipap * 10;
+  nextion.writeNum("ipap.val", myIpap);
+  uint32_t myEpap = epap * 10;
+  nextion.writeNum("epap.val", myEpap);
+}
+
+/**
+ * Here we cancel the pending values update.
+ * @param None
+ * @returns None
+ **/
+void cancelSettingsSave()
+{
+  // it basically calls the settings screen update again.
+  settingsScreenUpdate();
+}
+
+// Trigger mapping functions
+
+ void trigger0()
+ {
+   saveSettingsUpdate();
+ }
+
+ void trigger1()
+ {
+   cancelSettingsSave();
+ }
+
+  void trigger2()
+ {
+   settingsScreenUpdate();
+ }
 
 void setup() {
-  initialize(); // Initialize device parameters
+  Serial.begin(9600);
+  Serial.println("Booting Up");
 
-  // start the motor
-  startMotor();
-  setMotorDirection(1);
+  initialize(); // Initialize device parameters
 
   // start the pressure sensor
   pressureSensor.begin();
 
   delay(2000);
-
+  Serial.println("changing screen to start");
+  // Send a start command to the screen
+  changePage(START_PAGE_ID);
   // get the current time
   timePrev = millis();
 
 }
 
 
+
+
 void loop() {
+  // Enable screen listener
+  nextion.NextionListen();
 
   // Check the breathing mode
   switch (breathingMode)
   {
   case INHALE_MODE:
     // activate the inhale pressure
-    setMotorSpeed(inhaleSpeed);
+    setMotorSpeed(motor, inhaleSpeed);
+    //Serial.print("Current screen - ");
+    //Serial.println(nextion.currentPageId);
     // check if its time to swtich mode
     timeDiff = millis() - timePrev;
     if (timeDiff >= inhaleTime)
@@ -178,7 +341,7 @@ void loop() {
   
   case EXHALE_MODE:
     // activate the exhale pressure
-    setMotorSpeed(exhaleSpeed);
+    setMotorSpeed(motor, exhaleSpeed);
     // check if its time to swtich mode
     timeDiff = millis() - timePrev;
 
@@ -208,11 +371,21 @@ void loop() {
     // Serial.print(currentPressure, 2);
     // Serial.print(" mbar | ");
 
-    Serial.println(pressure2, 2);
+    //Serial.println(pressure2, 2);
     //Serial.println(" cmH20");
   }
+  /*
+  int currentpage = nextion.currentPageId;
+  //Serial.println(currentpage);
+  if (currentpage == 3) {
+  
+  unsigned long xHake = nextion.readNumber("bpm.val"); // Store to x the value of numeric box n0
+  Serial.print("bpm val: ");
+  Serial.println(xHake);
+  Serial.println("----");
+  }
+  */
 
-
-  delay(50);
+  delay(20);
 }
 
