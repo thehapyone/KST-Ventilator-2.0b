@@ -39,15 +39,10 @@ values = []
 counter = 1
 flowStartTime = None
 
-def calcPressure():
-    bpm = 12
-    global flowStartTime
-    timeElapsed = (time.time() - flowStartTime) % 60
-    pressure = 1.25 + math.sin((timeElapsed%bpm)*(2*3.14/bpm))
-    return pressure
-
 def write(messageID, data):
-    
+    '''
+    write byte array
+    '''
     try:
         initValue = ((messageID << 24) + data) & 0xFFFFFFFF
         global values
@@ -55,11 +50,14 @@ def write(messageID, data):
         ser.write(values)
         ser.write(b';')
         ser.flushOutput()
-        print ("Written ", messageID, data, [values[i] for i in range(values.__len__())] )
     except Exception as e:
         print ("%d %s"%(data, str(e)))
 
 def simulatePressure():
+    '''
+    simulate a sine wave
+    using the
+    '''
     global flowStartTime, counter
    
     if flowStartTime == None:
@@ -71,6 +69,9 @@ def simulatePressure():
 
 
 def setStartTime(readData):
+    '''
+    sync 
+    '''
     global flowStartTime
     match = re.search(r'26(\d+)', readData)
     if match:
@@ -83,7 +84,10 @@ def setStartTime(readData):
             print (str(e))    
     return None
 
-def readProcessData(readData):
+def processData(readData):
+    '''
+    parse the data received
+    '''
     global flowStartTime
     match = re.search(r'S:(\d+),SS:(\d+),T:(\d+),C:(\d+);', readData)
     if match:
@@ -98,25 +102,29 @@ def readProcessData(readData):
     return None
 
 def read():
+    '''
+    read the data from the controller 
+    '''
     global strRead, flowStartTime
-    messageID = random.randint(0, 255)
-    data = random.randint(0, 0xFF)
+    messageID = 0x18
     availData = ser.in_waiting
     if availData < 1:
         return None
     pressure = simulatePressure()    
     readData = ser.readline(availData).decode('utf-8')    
-    status = readProcessData(readData)
+    status = processData(readData)
     if status != None:  
         time.sleep(0.1)
-        write(0x18, pressure)        
+        write(messageID, pressure)        
         (state, target, current) = status
         return (state, target, current, pressure/1000.0)
     print(readData)
     return None
 
 def update(frame):
-    
+    '''
+    draws the data
+    '''
     global x_data, y_data, y_data2, y_data3, y_data4
     elapsedTime = time.time()-startTime
     
@@ -148,7 +156,7 @@ def update(frame):
         figure.gca().relim()
         figure.gca().autoscale_view()
     except Exception as e:
-       print("Exception (%d, %d) (%d, %d) (%d, %d) (%d, %d) (%d, %d)"%(lenx1,lenx, leny11,leny1, leny12, leny2, leny13,leny3, leny14, leny4))
+       print("Exception %s"%(str(e)))
     return line,line2, line3, line4
 
 animation = FuncAnimation(figure, update, interval=250)
