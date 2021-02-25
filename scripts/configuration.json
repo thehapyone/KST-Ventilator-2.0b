@@ -1,0 +1,162 @@
+{
+    "breathPerMin": 12,
+    "inhaleExhaleRatio": 0.5,
+    "maxMotorOutPut": 100,
+    "states": {
+        "inhale": {
+            "EnterInhale": {
+                "name": "ENTER_INHALE_MODE",
+                "durationPercentile": 10,
+                "order": 1,
+                "subStates": {
+                    "start": {
+                        "name": "ENTER_INHALE_MODE_START",
+                        "durationPercentile": 40,
+                        "desiredOutputPercentile": 40,
+                        "order": 1
+                    },
+                    "repeat": {
+                        "name": "ENTER_INHALE_MODE_REPEAT",
+                        "durationPercentile": 40,
+                        "desiredOutputPercentile": 80,
+                        "order": 2
+                    },
+                    "leave": {
+                        "name": "ENTER_INHALE_MODE_LEAVE",
+                        "durationPercentile": 20,
+                        "desiredOutputPercentile": 90,
+                        "order": 3
+                    }
+                }
+            },
+            "RunInhale": {
+                "name": "RUN_INHALE_MODE",
+                "durationPercentile": 85,
+                "order": 2,
+                "subStates": {
+                    "start": {
+                        "name": "RUN_INHALE_MODE_START",
+                        "durationPercentile": 20,
+                        "desiredOutputPercentile": 100,
+                        "order": 1
+                    },
+                    "repeat": {
+                        "name": "RUN_INHALE_MODE_REPEAT",
+                        "durationPercentile": 60,
+                        "desiredOutputPercentile": 100,
+                        "order": 2
+                    },
+                    "leave": {
+                        "name": "RUN_INHALE_MODE_LEAVE",
+                        "durationPercentile": 20,
+                        "desiredOutputPercentile": 100,
+                        "order": 3
+                    }
+                }
+            },
+            "ExitInhale": {
+                "name": "EXIT_INHALE_MODE",
+                "durationPercentile": 5,
+                "order": 3,
+                "subStates": {
+                    "start": {
+                        "name": "EXIT_INHALE_MODE_START",
+                        "durationPercentile": 20,
+                        "desiredOutputPercentile": 90,
+                        "order": 1
+                    },
+                    "repeat": {
+                        "name": "EXIT_INHALE_MODE_REPEAT",
+                        "durationPercentile": 40,
+                        "desiredOutputPercentile": 70,
+                        "order": 2
+                    },
+                    "leave": {
+                        "name": "EXIT_INHALE_MODE_LEAVE",
+                        "durationPercentile": 20,
+                        "desiredOutputPercentile": 50,
+                        "order": 3
+                    }
+                }
+            }
+        },
+        "exhale": {
+            "EnterExhale": {
+                "name": "ENTER_EXHALE_MODE",
+                "durationPercentile": 10,
+                "order": 1,
+                "subStates": {
+                    "start": {
+                        "name": "ENTER_EXHALE_MODE_START",
+                        "durationPercentile": 40,
+                        "desiredOutputPercentile": 40,
+                        "order": 1
+                    },
+                    "repeat": {
+                        "name": "ENTER_EXHALE_MODE_REPEAT",
+                        "durationPercentile": 40,
+                        "desiredOutputPercentile": 30,
+                        "order": 2
+                    },
+                    "leave": {
+                        "name": "ENTER_EXHALE_MODE_LEAVE",
+                        "durationPercentile": 20,
+                        "desiredOutputPercentile": 20,
+                        "order": 3
+                    }
+                }
+            },
+            "RunExhale": {
+                "name": "RUN_EXHALE_MODE",
+                "durationPercentile": 85,
+                "order": 2,
+                "subStates": {
+                    "start": {
+                        "name": "RUN_EXHALE_MODE_START",
+                        "durationPercentile": 20,
+                        "desiredOutputPercentile": 20,
+                        "order": 1
+                    },
+                    "repeat": {
+                        "name": "RUN_EXHALE_MODE_REPEAT",
+                        "durationPercentile": 60,
+                        "desiredOutputPercentile": 20,
+                        "order": 2
+
+                    },
+                    "leave": {
+                        "name": "RUN_EXHALE_MODE_LEAVE",
+                        "durationPercentile": 20,
+                        "desiredOutputPercentile": 20,
+                        "order": 3
+                    }
+                }
+            },
+            "ExitExhale": {
+                "name": "EXIT_EXHALE_MODE",
+                "durationPercentile": 5,
+                "order": 3,
+                "subStates": {
+                    "start": {
+                        "name": "EXIT_EXHALE_MODE_START",
+                        "durationPercentile": 20,
+                        "desiredOutputPercentile": 20,
+                        "order": 1
+                    },
+                    "repeat": {
+                        "name": "EXIT_EXHALE_MODE_REPEAT",
+                        "durationPercentile": 40,
+                        "desiredOutputPercentile": 20,
+                        "order": 2
+                    },
+                    "leave": {
+                        "name": "EXIT_EXHALE_MODE_LEAVE",
+                        "durationPercentile": 20,
+                        "desiredOutputPercentile": 30,
+                        "order": 3
+                    }
+                }
+            }
+        }
+    }
+}
