@@ -25,12 +25,12 @@ ser.timeout = 1
 ser.write_timeout = 1
 ser.open()
 
-x_data, y_data , y_data2 , y_data3 , y_data4= [], [], [], [], []
+x_data, y_target , y_current , y_state , y_pressure= [], [], [], [], []
 figure = pyplot.figure()
-line, =  pyplot.plot(x_data, y_data, 'g-', label='target')
-line2, = pyplot.plot(x_data, y_data2, 'b-', label='current')
-line3, = pyplot.plot(x_data, y_data3, 'k-', label='state')
-line4, = pyplot.plot(x_data, y_data4, 'r-', label='pressure')
+lineTarget, =  pyplot.plot(x_data, y_target, 'g-', label='target')
+lineCurrent, = pyplot.plot(x_data, y_current, 'b-', label='current')
+lineState, = pyplot.plot(x_data, y_state, 'k-', label='state')
+linePressure, = pyplot.plot(x_data, y_pressure, 'r-', label='pressure')
 
 startTime = time.time()
 initValue = 1
@@ -84,7 +84,7 @@ def setStartTime(readData):
             print (str(e))    
     return None
 
-def processData(readData):
+def parseData(readData):
     '''
     parse the data received
     '''
@@ -112,52 +112,54 @@ def read():
         return None
     pressure = simulatePressure()    
     readData = ser.readline(availData).decode('utf-8')    
-    status = processData(readData)
+    status = parseData(readData)
     if status != None:  
         time.sleep(0.1)
         write(messageID, pressure)        
         (state, target, current) = status
-        return (state, target, current, pressure/1000.0)
+        return [state, target, current, pressure/1000.0]
     print(readData)
     return None
+
+def updateLines (lines, datas, values, amountNeeded):
+    '''
+    process the data
+    '''
+    xdata = None
+    for (linex, data, value) in list(zip(lines, datas, values)):
+        data.append(value)
+        if len(data) > amountNeeded:
+            startIndex = len(data)-amountNeeded
+            data = data[startIndex:]
+        if linex == None:
+            xdata = data
+        else:
+            linex.set_data(xdata, data)
+    return
+
 
 def update(frame):
     '''
     draws the data
     '''
-    global x_data, y_data, y_data2, y_data3, y_data4
+    global x_data, y_target, y_current, y_state, y_pressure
     elapsedTime = time.time()-startTime
     
     data = read()
     if data is None:
         return
-    x_data.append(elapsedTime)
     try:
         amountToPlot = 100
-        (state, target, current, pressure) = data
-        y_data.append(target)        
-        y_data2.append(current)
-        y_data3.append(state)
-        y_data4.append(pressure)
-        [lenx1, leny11, leny12,  leny13, leny14] = [len(x_data), len(y_data), len(y_data2), len(y_data3), len(y_data4)]
-        availData = len(x_data)
-        if availData > amountToPlot:
-            startIndex = availData-amountToPlot
-            x_data = x_data[startIndex:]
-            y_data = y_data[startIndex:]
-            y_data2 = y_data2[startIndex:]
-            y_data3 = y_data3[startIndex:]
-            y_data4 = y_data4[startIndex:]
-        [lenx, leny1, leny2, leny3, leny4] = [len(x_data), len(y_data), len(y_data2), len(y_data3), len(y_data4)]
-        line.set_data(x_data, y_data)
-        line2.set_data(x_data, y_data2)
-        line3.set_data(x_data, y_data3)
-        line4.set_data(x_data, y_data4)
+        [state, target, current, pressure] = data
+        values = [elapsedTime, target, current, state, pressure]
+        datas = [x_data, y_target, y_current, y_state, y_pressure]
+        lines = [None, lineTarget, lineCurrent, lineState, linePressure]
+        updateLines(lines, datas, values, amountToPlot)
         figure.gca().relim()
         figure.gca().autoscale_view()
     except Exception as e:
        print("Exception %s"%(str(e)))
-    return line,line2, line3, line4
+    return y_target, y_current, y_state, y_pressure
 
 animation = FuncAnimation(figure, update, interval=250)
 pyplot.legend()
