@@ -32,6 +32,7 @@
 #include <state.h>
 #include <common.h>
 #include <pressure.h>
+
 SoftwareSerial mySerial(5, 6); // RX, TX
 
 /************ Pin Definitions *****************************/
@@ -76,6 +77,10 @@ float pressure2;
 /************* Other Variables *************************/
 uint16_t motorCurrent = 0;
 
+/************* PID variables *************************/
+//Define Variables we'll be connecting to
+//PID myPID(&Input, &Output, &Setpoint, consKp, consKi, consKd, DIRECT);
+PIDWrapper myPid; 
 /************* Pressure Sensor Config *************************/
 const uint8_t sensorPin = 10;
 Honeywell pressureSensor(sensorPin, 0.0, 60.0); //create instance of the sensor
@@ -302,12 +307,13 @@ void trigger2()
 }
 uint8_t initState()
 {
-  enterInhaleState = State("Begin Inhale", ENTER_INHALE_MODE, RUN_INHALE_MODE);
-  runInhaleState = State("Inhale", RUN_INHALE_MODE, EXIT_INHALE_MODE);
-  exitInhaleState = State("End Inhale", EXIT_INHALE_MODE, ENTER_EXHALE_MODE);
-  enterExhaleState = State("Begin Exhale", ENTER_EXHALE_MODE, RUN_EXHALE_MODE);
-  runExhaleState = State("Exhale", RUN_EXHALE_MODE, EXIT_EXHALE_MODE);
-  exitExhaleState = State("End Exhale", EXIT_EXHALE_MODE, ENTER_INHALE_MODE);
+
+  enterInhaleState = State("Begin Inhale", ENTER_INHALE_MODE, RUN_INHALE_MODE, &myPid);
+  runInhaleState = State("Inhale", RUN_INHALE_MODE, EXIT_INHALE_MODE, &myPid);
+  exitInhaleState = State("End Inhale", EXIT_INHALE_MODE, ENTER_EXHALE_MODE, &myPid);
+  enterExhaleState = State("Begin Exhale", ENTER_EXHALE_MODE, RUN_EXHALE_MODE, &myPid);
+  runExhaleState = State("Exhale", RUN_EXHALE_MODE, EXIT_EXHALE_MODE, &myPid);
+  exitExhaleState = State("End Exhale", EXIT_EXHALE_MODE, ENTER_INHALE_MODE, &myPid);
   return 0;
 }
 
@@ -369,6 +375,7 @@ void setup()
 
   initState();
   timePrev = millis();
+  
 }
 State *getStateById(uint8_t stateId)
 {
@@ -477,8 +484,8 @@ void loop()
   }
   */
    timeElapsed = millis() - timeElapsed;
-   if (timeElapsed < 250){
-     delay(250 - timeElapsed);
+   if (timeElapsed < 100){
+     delay(100 - timeElapsed);
    }
   
 }

@@ -13,7 +13,7 @@ void State::reset() {
        currentState = SUB_STATE_START;
        
 }
-State::State(const char *name_, uint8_t id, uint8_t nextState) {
+State::State(const char *name_, uint8_t id, uint8_t nextState, PIDWrapper *myPid) {
     
     setStateId(id);
     setNextStateId(nextState);
@@ -28,6 +28,7 @@ State::State(const char *name_, uint8_t id, uint8_t nextState) {
     State::runOperation = new MotorOperation( SUB_STATE_REPEAT, "repeat", &(State::rundata));
     reset();
     strncpy(State::name, name_, sizeof(State::name)-1);
+    State::myPid = myPid;
     
 }
 void State::moveToNextOperation()
@@ -46,19 +47,19 @@ uint8_t State::run(float currentData) {
    {
    case SUB_STATE_START/* constant-expression */:
        
-       status = State::enterOperation->run(stateId, currentData);
+       status = State::enterOperation->run(stateId, currentData, myPid);
        if (!State::enterOperation->isRunning())
             currentState = SUB_STATE_REPEAT;
        break;
    case SUB_STATE_REPEAT/* constant-expression */:
        
-       status = State::runOperation->run(stateId, currentData);
+       status = State::runOperation->run(stateId, currentData, myPid);
        if (!State::runOperation->isRunning())
             currentState = SUB_STATE_LEAVE;
        break;
    case SUB_STATE_LEAVE/* constant-expression */:
        
-       status = State::exitOperation->run(stateId, currentData);
+       status = State::exitOperation->run(stateId, currentData, myPid);
        if (!State::exitOperation->isRunning()){
            currentState = SUB_STATE_START;
            isComplete = true;

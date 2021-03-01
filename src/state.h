@@ -3,11 +3,13 @@
 #include <Arduino.h>
 #include <motor.h>
 #include <motorData.h>
+#include <common.h>
+#include <PID.h>
 class State
 {
   public:
     State ();
-    State(const char * name, uint8_t id, uint8_t nextState);
+    State(const char * name, uint8_t id, uint8_t nextState, PIDWrapper *myPid);
     void setStateId(uint8_t id);
     uint8_t getStateId();
     uint8_t getNextStateId();
@@ -30,6 +32,7 @@ class State
     uint8_t previousOperation;
     bool isComplete;
     uint8_t currentState;
+    PIDWrapper *myPid;
     
 
 };

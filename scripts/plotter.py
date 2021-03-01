@@ -30,7 +30,7 @@ figure = pyplot.figure()
 lineTarget, =  pyplot.plot(x_data, y_target, 'g-', label='target')
 lineCurrent, = pyplot.plot(x_data, y_current, 'b-', label='current')
 lineState, = pyplot.plot(x_data, y_state, 'k-', label='state')
-linePressure, = pyplot.plot(x_data, y_pressure, 'r-', label='pressure')
+linePressure, = pyplot.plot(x_data, y_pressure, 'r-', label='output')
 
 startTime = time.time()
 initValue = 1
@@ -89,7 +89,7 @@ def parseData(readData):
     parse the data received
     '''
     global flowStartTime
-    match = re.search(r'S:(\d+),SS:(\d+),T:(\d+),C:(\d+);', readData)
+    match = re.search(r'S:(\d+),SS:(\d+),T:(\d+),C:(\d+),O:(\d+);', readData)
     if match:
         state = (int(match.group(1)) - 0xA0 ) * 10
         state += int(match.group(2)) - 0xA0
@@ -98,7 +98,9 @@ def parseData(readData):
         target = int(match.group(3))
         current = int(match.group(4))
         current /= 1000.0
-        return (state, target, current)
+        output = int(match.group(5))
+        output /= 1000.0
+        return (state, target, current, output)
     return None
 
 def read():
@@ -116,8 +118,8 @@ def read():
     if status != None:  
         time.sleep(0.1)
         write(messageID, pressure)        
-        (state, target, current) = status
-        return [state, target, current, pressure/1000.0]
+        (state, target, current, output) = status
+        return [state, target, current,  output]
     print(readData)
     return None
 

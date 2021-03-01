@@ -59,13 +59,7 @@ void Pressure::updatePressure(uint32_t pressure)
 {
   
   lastSuccessfulReadTime = millis();
-  Serial.print("PressureUpdate at ");
-  Serial.print(lastSuccessfulReadTime);
-  Serial.print("to ");
-  Serial.print(pressure);
   previousValue = (float)(pressure / 1000.0);
-  Serial.print(" float ");
-  Serial.println(previousValue);
 }
 
 float Pressure::mock()

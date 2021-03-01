@@ -46,6 +46,14 @@ The below are the sensors available for this project.
  ### Connection
  The below image shows the device connection and interfaces.
 
+### Simulation
+ Simulation works by reading data from the PC and process and send the result to the serial port. The python script in the PC reads the out plot the result.
+ steps to simulate:
+  1. Adjust the json file to the desired level
+  2. Run the motorDataGenerator.py to update the values
+  3. Programme the arduino
+  4. Run the script plotter.py to see the target, reading and the output
+
 
  ### Changelogs
  Here is a summary of the development change history -

@@ -7,7 +7,7 @@ class MotorOperation{
 public:
     MotorOperation();
     MotorOperation(uint8_t opId, const char* name_, Motordata_t *motorData);
-    uint8_t run(uint8_t stateId, float currentData); 
+    uint8_t run(uint8_t stateId, float currentData, PIDWrapper *myPid); 
     
     uint8_t getrunTimeInMs();
     uint8_t getMotorSpeed();  
@@ -32,6 +32,7 @@ private:
     void start();
     uint8_t opId;
     void exit(uint8_t errorCode);
+    int calcDeviation(float currentData);
 
 };
 #endif

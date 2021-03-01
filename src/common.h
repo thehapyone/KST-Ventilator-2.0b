@@ -4,7 +4,7 @@
 
 #include <Arduino.h>
 #include <string.h>
-
+#include <PID.h>
 
 #define OPERATION_ERROR_NO_ERROR 11
 #define OPERATION_ERROR_TIME_OUT OPERATION_ERROR_NO_ERROR+1
